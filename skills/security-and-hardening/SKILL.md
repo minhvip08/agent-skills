@@ -1,13 +1,13 @@
 ---
 name: security-and-hardening
-description: Hardens code against vulnerabilities. Use when handling user input, authentication, data storage, or external integrations. Use when building any feature that accepts untrusted data, manages user sessions, or interacts with third-party services.
+description: Hardens backend code against vulnerabilities. Use when handling user input, authentication, data storage, or external integrations. Use when building any feature that accepts untrusted data, manages user sessions, or interacts with third-party services.
 ---
 
 # Security and Hardening
 
 ## Overview
 
-Security-first development practices for web applications. Treat every external input as hostile, every secret as sacred, and every authorization check as mandatory. Security isn't a phase — it's a constraint on every line of code that touches user data, authentication, or external systems.
+Treat every external input as hostile, every secret as sacred, and every authorization check as mandatory. Security is a constraint on every line of code that touches user data, authentication, or external systems — not a phase you get to later.
 
 ## When to Use
 
@@ -20,448 +20,195 @@ Security-first development practices for web applications. Treat every external 
 
 ## Process: Threat Model First
 
-Controls bolted on without a threat model are guesses. Before hardening, spend five minutes thinking like an attacker:
+Before hardening, spend five minutes thinking like an attacker:
 
-1. **Map the trust boundaries.** Where does untrusted data cross into your system? HTTP requests, form fields, file uploads, webhooks, third-party APIs, message queues, and **LLM output**. Every boundary is attack surface.
-2. **Name the assets.** What's worth stealing or breaking? Credentials, PII, payment data, admin actions, money movement.
-3. **Run STRIDE over each boundary** — a quick lens, not a ceremony:
+1. **Map the trust boundaries** — where does untrusted data cross into your system? HTTP requests, form fields, file uploads, webhooks, third-party APIs, message queues, LLM output.
+2. **Name the assets** — credentials, PII, payment data, admin actions, money movement.
+3. **Run STRIDE over each boundary:**
 
 | Threat | Ask | Typical mitigation |
 |---|---|---|
 | **S**poofing | Can someone impersonate a user/service? | Authentication, signature verification |
-| **T**ampering | Can data be altered in transit or at rest? | Integrity checks, parameterized queries, HTTPS |
+| **T**ampering | Can data be altered in transit or at rest? | Integrity checks, parameterized queries, TLS |
 | **R**epudiation | Can an action be denied later? | Audit logging of security events |
 | **I**nformation disclosure | Can data leak? | Encryption, field allowlists, generic errors |
 | **D**enial of service | Can it be overwhelmed? | Rate limiting, input size caps, timeouts |
 | **E**levation of privilege | Can a user gain rights they shouldn't? | Authorization checks, least privilege |
 
-4. **Write abuse cases next to use cases.** For each feature, ask "how would I misuse this?" — then make that your first test.
-
-If you can't name the trust boundaries for a feature, you're not ready to secure it. This is OWASP **A04: Insecure Design** — most breaches begin in design, not code.
+If you can't name the trust boundaries for a feature, you're not ready to secure it.
 
 ## The Three-Tier Boundary System
 
-### Always Do (No Exceptions)
+**Always do:** validate all external input at the boundary (controller/handler); parameterize all queries — never concatenate user input into SQL/JPQL; hash passwords with BCrypt/Argon2; use TLS everywhere; set security headers (CSP, HSTS, X-Frame-Options); use httpOnly/secure/sameSite session cookies; run the dependency audit before every release.
 
-- **Validate all external input** at the system boundary (API routes, form handlers)
-- **Parameterize all database queries** — never concatenate user input into SQL
-- **Encode output** to prevent XSS (use framework auto-escaping, don't bypass it)
-- **Use HTTPS** for all external communication
-- **Hash passwords** with bcrypt/scrypt/argon2 (never store plaintext)
-- **Set security headers** (CSP, HSTS, X-Frame-Options, X-Content-Type-Options)
-- **Use httpOnly, secure, sameSite cookies** for sessions
-- **Run the detected package manager's native audit** against the committed lockfile before every release
+**Ask first:** new auth flows, new categories of sensitive data, new external integrations, CORS changes, file upload handlers, rate-limit changes, elevated roles.
 
-### Ask First (Requires Human Approval)
+**Never do:** commit secrets to version control; log sensitive data (passwords, tokens, full card numbers); trust client-side validation as a security boundary; disable security headers for convenience; expose stack traces to users.
 
-- Adding new authentication flows or changing auth logic
-- Storing new categories of sensitive data (PII, payment info)
-- Adding new external service integrations
-- Changing CORS configuration
-- Adding file upload handlers
-- Modifying rate limiting or throttling
-- Granting elevated permissions or roles
+## Prevention Patterns
 
-### Never Do
+### Injection (SQL/JPQL)
 
-- **Never commit secrets** to version control (API keys, passwords, tokens)
-- **Never log sensitive data** (passwords, tokens, full credit card numbers)
-- **Never trust client-side validation** as a security boundary
-- **Never disable security headers** for convenience
-- **Never use `eval()` or `innerHTML`** with user-provided data
-- **Never store sessions in client-accessible storage** (localStorage for auth tokens)
-- **Never expose stack traces** or internal error details to users
+```java
+// BAD: string concatenation
+String sql = "SELECT * FROM users WHERE id = '" + userId + "'";
 
-## OWASP Top 10 Prevention Patterns
-
-These are prevention patterns, not a ranking. For the 2021 ordering, see the quick-reference table in `references/security-checklist.md`.
-
-### Injection (SQL, NoSQL, OS Command)
-
-```typescript
-// BAD: SQL injection via string concatenation
-const query = `SELECT * FROM users WHERE id = '${userId}'`;
-
-// GOOD: Parameterized query
-const user = await db.query('SELECT * FROM users WHERE id = $1', [userId]);
-
-// GOOD: ORM with parameterized input
-const user = await prisma.user.findUnique({ where: { id: userId } });
+// GOOD: parameterized / JPA repository
+@Query("SELECT u FROM User u WHERE u.id = :id")
+Optional<User> findById(@Param("id") String id);
 ```
 
-### Broken Authentication
+### Authentication
 
-```typescript
-// Password hashing
-import { hash, compare } from 'bcrypt';
-
-const SALT_ROUNDS = 12;
-const hashedPassword = await hash(plaintext, SALT_ROUNDS);
-const isValid = await compare(plaintext, hashedPassword);
-
-// Session management
-app.use(session({
-  secret: process.env.SESSION_SECRET,  // From environment, not code
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    httpOnly: true,     // Not accessible via JavaScript
-    secure: true,       // HTTPS only
-    sameSite: 'lax',    // CSRF protection
-    maxAge: 24 * 60 * 60 * 1000,  // 24 hours
-  },
-}));
+```java
+PasswordEncoder encoder = new BCryptPasswordEncoder(12);
+String hash = encoder.encode(plaintext);
+boolean valid = encoder.matches(plaintext, hash);
 ```
 
-### Cross-Site Scripting (XSS)
-
-```typescript
-// BAD: Rendering user input as HTML
-element.innerHTML = userInput;
-
-// GOOD: Use framework auto-escaping (React does this by default)
-return <div>{userInput}</div>;
-
-// If you MUST render HTML, sanitize first
-import DOMPurify from 'dompurify';
-const clean = DOMPurify.sanitize(userInput);
-```
+Session cookies: `httpOnly`, `secure`, `sameSite=Lax`, bounded expiry, secret from environment/vault — never in code.
 
 ### Broken Access Control
 
-```typescript
-// Always check authorization, not just authentication
-app.patch('/api/tasks/:id', authenticate, async (req, res) => {
-  const task = await taskService.findById(req.params.id);
-
-  // Check that the authenticated user owns this resource
-  if (task.ownerId !== req.user.id) {
-    return res.status(403).json({
-      error: { code: 'FORBIDDEN', message: 'Not authorized to modify this task' }
-    });
-  }
-
-  // Proceed with update
-  const updated = await taskService.update(req.params.id, req.body);
-  return res.json(updated);
-});
+```java
+@PatchMapping("/api/tasks/{id}")
+public ResponseEntity<Task> update(@PathVariable String id, @AuthenticationPrincipal User user, @RequestBody TaskUpdate body) {
+    Task task = taskService.findById(id);
+    if (!task.getOwnerId().equals(user.getId())) {
+        throw new ForbiddenException("Not authorized to modify this task");
+    }
+    return ResponseEntity.ok(taskService.update(id, body));
+}
 ```
 
-### Security Misconfiguration
+Check authorization, not just authentication, on every protected endpoint.
 
-```typescript
-// Security headers (use helmet for Express)
-import helmet from 'helmet';
-app.use(helmet());
+### Security Misconfiguration (Headers & CORS)
 
-// Content Security Policy
-app.use(helmet.contentSecurityPolicy({
-  directives: {
-    defaultSrc: ["'self'"],
-    scriptSrc: ["'self'"],
-    styleSrc: ["'self'", "'unsafe-inline'"],  // Tighten if possible
-    imgSrc: ["'self'", 'data:', 'https:'],
-    connectSrc: ["'self'"],
-  },
-}));
-
-// CORS — restrict to known origins
-app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || 'http://localhost:3000',
-  credentials: true,
-}));
+```java
+@Bean
+SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    http.headers(headers -> headers.contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'")))
+        .cors(cors -> cors.configurationSource(request -> {
+            CorsConfiguration config = new CorsConfiguration();
+            config.setAllowedOrigins(List.of(System.getenv("ALLOWED_ORIGINS").split(",")));
+            return config;
+        }));
+    return http.build();
+}
 ```
+
+Never use a wildcard (`*`) origin alongside credentials.
 
 ### Sensitive Data Exposure
 
-```typescript
-// Never return sensitive fields in API responses
-function sanitizeUser(user: UserRecord): PublicUser {
-  const { passwordHash, resetToken, ...publicFields } = user;
-  return publicFields;
-}
-
-// Use environment variables for secrets
-const API_KEY = process.env.STRIPE_API_KEY;
-if (!API_KEY) throw new Error('STRIPE_API_KEY not configured');
+```java
+// Never return the entity directly — project to a DTO that excludes secrets
+public record PublicUser(String id, String email, String displayName) {}
 ```
+
+Read secrets (API keys, DB credentials) from environment variables or a secrets manager — never hardcode them.
 
 ### Server-Side Request Forgery (SSRF)
 
-Any time the server fetches a URL the user influenced — webhooks, "import from URL", image proxies, link previews — an attacker can aim it at internal services (cloud metadata, `localhost`, private IPs).
+Any server-side fetch of a user-influenced URL (webhooks, "import from URL", link previews) can be aimed at internal services (cloud metadata, `localhost`, private IPs).
 
-```typescript
-// BAD: fetch whatever the user gives you
-await fetch(req.body.webhookUrl);
-
-// GOOD: allowlist scheme + host, reject if ANY resolved IP is private, forbid redirects
-import { lookup } from 'node:dns/promises';
-import ipaddr from 'ipaddr.js';
-
-const ALLOWED_HOSTS = new Set(['hooks.example.com']);
-
-async function assertSafeUrl(raw: string): Promise<URL> {
-  const url = new URL(raw);
-  if (url.protocol !== 'https:') throw new Error('https only');
-  if (!ALLOWED_HOSTS.has(url.hostname)) throw new Error('host not allowed');
-  // Resolve ALL records; a single private/reserved address fails the check.
-  const addrs = await lookup(url.hostname, { all: true });
-  if (addrs.some((a) => ipaddr.parse(a.address).range() !== 'unicast')) {
-    throw new Error('private/reserved IP');
-  }
-  return url;
-}
-
-await fetch(await assertSafeUrl(req.body.webhookUrl), { redirect: 'error' });
-```
-
-The `range() !== 'unicast'` check covers loopback, link-local `169.254.169.254` (cloud metadata, the #1 SSRF target), private, and unique-local ranges across IPv4 and IPv6.
-
-**Caveat — this still has a TOCTOU gap.** `fetch` resolves DNS again after the check, so an attacker using a short-TTL record can rebind to an internal IP between validation and connection. For high-risk surfaces, resolve once and connect to the pinned IP, or put a filtering agent in front (`request-filtering-agent` / `ssrf-req-filter`).
-
-## Input Validation Patterns
-
-### Schema Validation at Boundaries
-
-```typescript
-import { z } from 'zod';
-
-const CreateTaskSchema = z.object({
-  title: z.string().min(1).max(200).trim(),
-  description: z.string().max(2000).optional(),
-  priority: z.enum(['low', 'medium', 'high']).default('medium'),
-  dueDate: z.string().datetime().optional(),
-});
-
-// Validate at the route handler
-app.post('/api/tasks', async (req, res) => {
-  const result = CreateTaskSchema.safeParse(req.body);
-  if (!result.success) {
-    return res.status(422).json({
-      error: {
-        code: 'VALIDATION_ERROR',
-        message: 'Invalid input',
-        details: result.error.flatten(),
-      },
-    });
-  }
-  // result.data is now typed and validated
-  const task = await taskService.create(result.data);
-  return res.status(201).json(task);
-});
-```
-
-### File Upload Safety
-
-```typescript
-// Restrict file types and sizes
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_SIZE = 5 * 1024 * 1024; // 5MB
-
-function validateUpload(file: UploadedFile) {
-  if (!ALLOWED_TYPES.includes(file.mimetype)) {
-    throw new ValidationError('File type not allowed');
-  }
-  if (file.size > MAX_SIZE) {
-    throw new ValidationError('File too large (max 5MB)');
-  }
-  // Don't trust the file extension — check magic bytes if critical
+```java
+URL url = new URL(rawUrl);
+if (!url.getProtocol().equals("https")) throw new IllegalArgumentException("https only");
+if (!ALLOWED_HOSTS.contains(url.getHost())) throw new IllegalArgumentException("host not allowed");
+for (InetAddress addr : InetAddress.getAllByName(url.getHost())) {
+    if (addr.isLoopbackAddress() || addr.isLinkLocalAddress() || addr.isSiteLocalAddress()) {
+        throw new IllegalArgumentException("private/reserved IP");
+    }
 }
 ```
 
-## Triaging Dependency Audit Results
+Note the TOCTOU gap: a short-TTL DNS record can rebind between validation and connection. For high-risk surfaces, resolve once and connect to the pinned IP.
 
-Package-manager audits report known advisories; they do not prove a package is trustworthy or that vulnerable code is reachable. Use this decision tree:
+## Input Validation
 
-```
-The native package-manager audit reports a vulnerability
-├── Severity: critical or high
-│   ├── Is the vulnerable code reachable in runtime, build, test, or deployment paths?
-│   │   ├── YES --> Fix immediately (update, patch, or replace the dependency)
-│   │   └── NO (confirmed unused across those paths) --> Fix soon, but not a blocker
-│   └── Is a fix available?
-│       ├── YES --> Update to the patched version
-│       └── NO --> Check for workarounds, consider replacing the dependency, or add to allowlist with a review date
-├── Severity: moderate
-│   ├── Reachable in production? --> Fix in the next release cycle
-│   └── Dev-only? --> Fix when convenient, track in backlog
-└── Severity: low
-    └── Track and fix during regular dependency updates
+Validate at the boundary with Jakarta Bean Validation, not ad hoc checks scattered through the service layer:
+
+```java
+public record CreateTaskRequest(
+    @NotBlank @Size(max = 200) String title,
+    @Size(max = 2000) String description,
+    @NotNull TaskPriority priority
+) {}
+
+@PostMapping("/api/tasks")
+public ResponseEntity<Task> create(@Valid @RequestBody CreateTaskRequest req) { ... }
 ```
 
-**Key questions:**
-- Is the vulnerable function actually called in your code path?
-- Is the dependency a runtime dependency or dev-only?
-- Is the vulnerability exploitable given your deployment context (e.g., a server-side vulnerability in a client-only app)?
+**File uploads:** restrict allowed content types and max size; don't trust the file extension — check magic bytes for anything security-sensitive.
 
-When you defer a fix, document the reason and set a review date.
+## Dependency & Supply-Chain Hygiene
 
-### Supply-Chain Hygiene
-
-Do not assume npm or treat the nearest manifest as the install root. Apply this order:
-
-1. **Find the installation boundary and manager.** Use the workspace root that owns the lockfile, or an independent nested project only when it is outside that workspace. There, corroborate `packageManager` (when present), the lockfile, and CI; stop on disagreement or competing lockfiles. Pin the manager version and use the matrix in `references/security-checklist.md`.
-2. **Block dependency scripts before first execution.** Bootstrap with scripts disabled or a documented fail-closed policy, inspect the pending script source, approve only the minimum required packages, commit the policy, then verify with a clean frozen/immutable install. Never blanket-approve scripts.
-
-Audits only find known advisories; they do not catch a newly malicious or typosquatted package. Therefore:
-
-- **Never apply forced audit remediation automatically** (`npm audit fix --force` or equivalent). Preview the remediation, read changelogs, and test each resulting upgrade; forced fixes may cross declared dependency ranges.
-- **Verify registry signatures and provenance where supported** (`npm audit signatures`, `pnpm audit signatures`) and treat absence as a signal to investigate, not automatic proof of compromise.
-- **Review new dependencies, lockfile diffs, and script-policy changes together** — ownership, maintenance, release age, provenance, transitive graph, and typosquats such as `cross-env` vs `crossenv` (OWASP **A06**, **LLM03**).
+- Run the build tool's dependency audit before release (`mvn org.owasp:dependency-check:check`, or Gradle's `dependencyCheckAnalyze`). A critical/high finding reachable in your runtime path blocks the release; unreachable or dev-only findings can be tracked and fixed on the next cycle.
+- Pin dependency versions; review the lockfile/BOM diff on every bump, not just the version number in `pom.xml`/`build.gradle`.
+- Upgrade one dependency per change where practical — a bulk "bump deps" that breaks the build hides which package did it.
+- Audits only catch known advisories, not a newly malicious or typosquatted package (e.g. a plausible-looking group ID). Review new dependencies for ownership, maintenance, and release age before adding them.
 
 ## Rate Limiting
 
-```typescript
-import rateLimit from 'express-rate-limit';
-
-// General API rate limit
-app.use('/api/', rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100,                   // 100 requests per window
-  standardHeaders: true,
-  legacyHeaders: false,
-}));
-
-// Stricter limit for auth endpoints
-app.use('/api/auth/', rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,  // 10 attempts per 15 minutes
-}));
-```
+Use a token-bucket limiter (Bucket4j, Resilience4j, or your gateway) with a stricter limit on auth endpoints than on general API traffic.
 
 ## Secrets Management
 
-```
-.env files:
-  ├── .env.example  → Committed (template with placeholder values)
-  ├── .env          → NOT committed (contains real secrets)
-  └── .env.local    → NOT committed (local overrides)
-
-.gitignore must include:
-  .env
-  .env.local
-  .env.*.local
-  *.pem
-  *.key
-```
-
-**Always check before committing:**
-```bash
-# Check for accidentally staged secrets
-git diff --cached | grep -i "password\|secret\|api_key\|token"
-```
-
-**If a secret is ever committed, rotate it.** Deleting the line or rewriting history is not enough — assume it's compromised the moment it reaches a remote. Revoke and reissue the key first, then purge it from history.
+Keep secrets in environment variables, a vault, or your platform's secret store — never in `application.properties`/`application.yml` checked into git. Add `.env`, `*.pem`, `*.key`, and any local override files to `.gitignore`. If a secret is ever committed, rotate it immediately — deleting the line or rewriting history is not enough, assume it's compromised the moment it reaches a remote.
 
 ## Securing AI / LLM Features
 
-If your app calls an LLM — chatbots, summarizers, agents, RAG — it inherits a new attack surface. Map it to the [OWASP Top 10 for LLM Applications (2025)](https://genai.owasp.org/llm-top-10/):
+If your service calls an LLM (chatbot, summarizer, agent, RAG), it inherits a new attack surface — map it to the [OWASP Top 10 for LLM Applications](https://genai.owasp.org/llm-top-10/):
 
-- **Treat all model output as untrusted input (LLM05: Improper Output Handling).** Never pass LLM output straight into `eval`, SQL, a shell, `innerHTML`, or a file path. Validate and encode it exactly as you would raw user input.
-- **Assume prompts can be hijacked (LLM01: Prompt Injection).** Untrusted text in the context window — a user message, a fetched web page, a PDF — can carry instructions. The system prompt is not a security boundary; enforce permissions in code, not in the prompt.
-- **Keep secrets and other users' data out of prompts (LLM02 / LLM07).** Anything in the context can be echoed back. Don't put API keys, cross-tenant data, or the full system prompt where the model can repeat it.
-- **Constrain tool and agent permissions (LLM06: Excessive Agency).** Scope tools to the minimum, require confirmation for destructive or irreversible actions, and validate every tool argument.
-- **Bound consumption (LLM10: Unbounded Consumption).** Cap tokens, request rate, and loop/recursion depth so a crafted input can't run up cost or hang the system.
-- **Isolate retrieval data (LLM08: Vector and Embedding Weaknesses).** In RAG, treat the vector store as a trust boundary: partition embeddings per tenant so one user can't retrieve another's data, and validate documents before indexing so poisoned content can't steer answers.
+- **Treat model output as untrusted input.** Never pass it straight into a query, a shell command, or a file path.
+- **Assume prompts can be hijacked.** Untrusted text in the context (a user message, a fetched document) can carry instructions; enforce permissions in code, not in the system prompt.
+- **Keep secrets and other tenants' data out of prompts** — anything in context can be echoed back.
+- **Constrain tool/agent permissions** to the minimum, and require confirmation for destructive actions.
+- **Bound consumption** — cap tokens, request rate, and recursion depth.
 
-```typescript
-// BAD: trusting model output as a command or as markup
-const sql = await llm.generate(`Write SQL for: ${userQuestion}`);
-await db.query(sql);                                   // arbitrary query execution
-container.innerHTML = await llm.reply(userMessage);   // stored XSS, via the model
-
-// GOOD: model output is data — parse defensively, then validate, then encode
-let intent;
+```java
+// GOOD: model output is data — parse defensively, validate, then act through an allowlist
+CommandIntent intent;
 try {
-  intent = CommandSchema.parse(JSON.parse(await llm.replyJson(userMessage)));
-} catch {
-  throw new ValidationError('unexpected model output'); // JSON.parse or schema failed
+    intent = objectMapper.readValue(llm.replyJson(userMessage), CommandIntent.class);
+} catch (Exception e) {
+    throw new ValidationException("unexpected model output");
 }
-await runAllowlistedAction(intent.action, intent.params);
-container.textContent = await llm.reply(userMessage);
+runAllowlistedAction(intent.action(), intent.params());
 ```
-
-## Security Review Checklist
-
-```markdown
-### Authentication
-- [ ] Passwords hashed with bcrypt/scrypt/argon2 (salt rounds ≥ 12)
-- [ ] Session tokens are httpOnly, secure, sameSite
-- [ ] Login has rate limiting
-- [ ] Password reset tokens expire
-
-### Authorization
-- [ ] Every endpoint checks user permissions
-- [ ] Users can only access their own resources
-- [ ] Admin actions require admin role verification
-
-### Input
-- [ ] All user input validated at the boundary
-- [ ] SQL queries are parameterized
-- [ ] HTML output is encoded/escaped
-- [ ] Server-side URL fetches are allowlisted (no SSRF to internal services)
-
-### Data
-- [ ] No secrets in code or version control
-- [ ] Sensitive fields excluded from API responses
-- [ ] PII encrypted at rest (if applicable)
-
-### Infrastructure
-- [ ] Security headers configured (CSP, HSTS, etc.)
-- [ ] CORS restricted to known origins
-- [ ] Dependencies audited for vulnerabilities
-- [ ] Error messages don't expose internals
-
-### Supply Chain
-- [ ] One authoritative lockfile committed; CI uses that manager's frozen/immutable install
-- [ ] Native audit triaged by reachability and fix risk; dependency install scripts blocked unless explicitly approved
-- [ ] New dependencies reviewed (ownership, provenance, release age, transitive graph)
-
-### AI / LLM (if used)
-- [ ] Model output treated as untrusted (no eval/SQL/innerHTML/shell)
-- [ ] Secrets and other users' data kept out of prompts
-- [ ] Tool/agent permissions scoped; destructive actions require confirmation
-```
-## See Also
-
-For detailed security checklists and pre-commit verification steps, see `references/security-checklist.md`.
 
 ## Common Rationalizations
 
 | Rationalization | Reality |
 |---|---|
 | "This is an internal tool, security doesn't matter" | Internal tools get compromised. Attackers target the weakest link. |
-| "We'll add security later" | Security retrofitting is 10x harder than building it in. Add it now. |
-| "No one would try to exploit this" | Automated scanners will find it. Security by obscurity is not security. |
-| "The framework handles security" | Frameworks provide tools, not guarantees. You still need to use them correctly. |
-| "It's just a prototype" | Prototypes become production. Security habits from day one. |
-| "Threat modeling is overkill here" | Five minutes of "how would I attack this?" prevents the design flaws no control can patch later. |
-| "It's just LLM output, it's only text" | That "text" can be a SQL statement, a script tag, or a shell command. Treat it like any untrusted input. |
-| "The audit passed, so the dependency is safe" | Audits match known advisories. They do not detect a newly malicious package or make unreviewed install scripts safe to execute. |
+| "We'll add security later" | Retrofitting is far harder than building it in. Add it now. |
+| "The framework handles security" | Frameworks provide tools, not guarantees. You still have to use them correctly. |
+| "Threat modeling is overkill here" | Five minutes of "how would I attack this?" prevents design flaws no control can patch later. |
+| "The audit passed, so the dependency is safe" | Audits match known advisories; they don't catch a newly malicious package. |
 
 ## Red Flags
 
-- User input passed directly to database queries, shell commands, or HTML rendering
+- User input passed directly into a query, a shell command, or a file path
 - Secrets in source code or commit history
-- API endpoints without authentication or authorization checks
-- Missing CORS configuration or wildcard (`*`) origins
+- Endpoints without authentication or authorization checks
+- Wildcard CORS origins
 - No rate limiting on authentication endpoints
-- Stack traces or internal errors exposed to users
-- Dependencies with known critical vulnerabilities, competing lockfiles at one installation boundary, non-reproducible installs, or blanket-approved scripts
-- Server fetches user-supplied URLs without an allowlist (SSRF)
-- LLM/model output passed into a query, the DOM, a shell, or `eval`
-- Secrets, PII, or the full system prompt placed inside an LLM context window
+- Stack traces exposed to callers
+- Dependencies with known critical/high vulnerabilities, unreviewed
+- Server fetches a user-supplied URL without an allowlist (SSRF)
+- LLM output passed into a query, shell, or file path without validation
 
 ## Verification
 
 After implementing security-relevant code:
 
-- [ ] The native audit has no unmitigated reachable critical/high findings; CI preserves the authoritative lockfile and blocks unreviewed dependency scripts
 - [ ] No secrets in source code or git history
-- [ ] All user input validated at system boundaries
+- [ ] All external input validated at the boundary
 - [ ] Authentication and authorization checked on every protected endpoint
-- [ ] Security headers present in response (check with browser DevTools)
-- [ ] Error responses don't expose internal details
-- [ ] Rate limiting active on auth endpoints
+- [ ] Dependency audit has no unmitigated reachable critical/high findings
 - [ ] Server-side URL fetches validated against an allowlist (no SSRF)
-- [ ] LLM/model output validated and encoded before use (if AI features present)
+- [ ] Error responses don't expose internal details
+- [ ] LLM output validated before use (if AI features present)
