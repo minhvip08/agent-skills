@@ -19,7 +19,7 @@ Decompose work into small, verifiable tasks with explicit acceptance criteria. E
 
 ## The Planning Process
 
-1. **Enter plan mode.** Read the spec and relevant code, identify existing patterns, map dependencies, note risks — read-only, no code written. Output is a plan saved to `tasks/plan.md` and a checklist to `tasks/todo.md`.
+1. **Enter plan mode.** Read the spec and relevant code, identify existing patterns, map dependencies, note risks — read-only, no code written. Output is a plan and checklist saved into the task's own folder: `tasks/<YYYY-MM-DD>-<task-name>/plan.md` and `.../todo.md` (same folder as the task's `SPEC.md`, if one exists).
 2. **Map the dependency graph.** For a typical backend feature: `entity/schema → repository → service → controller/endpoint → validation`. Migrations and seed data sit alongside the schema. Order implementation bottom-up.
 3. **Slice vertically, not horizontally.** Don't do "all entities, then all services, then all controllers" — instead, "user can register" (entity + repository + service + endpoint), then "user can log in," then the next feature slice. Each slice is working, testable functionality end to end.
 4. **Write each task with:**
@@ -71,7 +71,7 @@ Break a task down further if: it would take more than one focused session, you c
 - [Needs human input]
 ```
 
-Save to `tasks/plan.md` (plan) and `tasks/todo.md` (checklist) — the convention expected by `/build` and other downstream tooling.
+Save to `tasks/<date>-<task-name>/plan.md` (plan) and `.../todo.md` (checklist) — the convention expected by `/build` and other downstream tooling. Reuse the same folder the spec was written to; don't create a second one for the same task.
 
 ## Parallelization
 

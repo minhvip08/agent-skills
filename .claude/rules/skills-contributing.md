@@ -10,6 +10,6 @@ This repo already covers most of the development lifecycle, so most new-skill id
 
 - Run the pre-flight checks in [CONTRIBUTING.md](../../CONTRIBUTING.md#before-proposing-a-new-skill): search the catalog, check open PRs (`gh pr list --state open`), and justify the gap.
 - Prefer extending an existing skill over adding a near-duplicate. If the idea overlaps an existing skill, edit that skill instead of adding a new directory.
-- Keep the `SKILL.md` within [docs/skill-anatomy.md](../../docs/skill-anatomy.md), and never duplicate content between skills, reference the other skill instead.
+- Keep the `SKILL.md` structure consistent with the existing skills in `skills/` (Overview, When to Use, Process, Common Rationalizations, Red Flags, Verification per `CLAUDE.md`'s conventions), and never duplicate content between skills — reference the other skill instead.
 
 CONTRIBUTING.md is the single source of truth for the full workflow; this rule points to it rather than restating its checklist.

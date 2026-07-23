@@ -17,6 +17,10 @@ Write a structured specification before writing any code. The spec is the shared
 
 **When NOT to use:** single-line fixes, typo corrections, or changes where requirements are unambiguous and self-contained.
 
+## Output Location
+
+Every generated artifact for a task lives together in one folder: `tasks/<YYYY-MM-DD>-<kebab-case-task-name>/`. The spec is `SPEC.md` inside that folder (not the repo root) — this keeps one task's spec, plan, and todo list together and stops the next task from overwriting the previous one.
+
 ## The Gated Workflow
 
 ```
@@ -89,7 +93,7 @@ Reframe vague requirements as testable success criteria: "make it faster" become
 
 ### Phase 2: Plan
 
-With the validated spec, identify components and their dependencies, implementation order, risks, and what can be parallelized. Follow `planning-and-task-breakdown` for the mechanics — it's the canonical source. Save the plan to `tasks/plan.md` and the task list to `tasks/todo.md`.
+With the validated spec, identify components and their dependencies, implementation order, risks, and what can be parallelized. Follow `planning-and-task-breakdown` for the mechanics — it's the canonical source. Save the plan and task list into the same task folder as the spec: `tasks/<YYYY-MM-DD>-<task-name>/plan.md` and `.../todo.md`.
 
 ### Phase 3: Tasks
 
@@ -125,4 +129,4 @@ Update the spec when decisions or scope change — before implementing the chang
 - [ ] The human has reviewed and approved the spec
 - [ ] Success criteria are specific and testable
 - [ ] Boundaries (Always/Ask First/Never) are defined
-- [ ] The spec is saved to a file in the repository
+- [ ] The spec is saved to `tasks/<date>-<task-name>/SPEC.md`
