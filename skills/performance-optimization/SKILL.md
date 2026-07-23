@@ -48,16 +48,14 @@ for (Task task : tasks) {
     User owner = userRepository.findById(task.getOwnerId()).orElseThrow();
 }
 
-// GOOD: fetch join in one query
-@Query("SELECT t FROM Task t JOIN FETCH t.owner")
-List<Task> findAllWithOwner();
+// GOOD: fetch join in one query — the exact syntax depends on your ORM
+// (JPA/Hibernate JPQL, jOOQ join, MyBatis mapped join, etc.)
+List<Task> tasks = entityManager
+    .createQuery("SELECT t FROM Task t JOIN FETCH t.owner", Task.class)
+    .getResultList();
 ```
 
-```kotlin
-// GOOD (Kotlin/Spring Data): same fix, fetch join or an entity graph
-@EntityGraph(attributePaths = ["owner"])
-fun findAll(): List<Task>
-```
+The general fix is the same regardless of ORM: request the related entity in the same round trip instead of triggering a query per row.
 
 ### Unbounded Data Fetching
 
@@ -65,8 +63,12 @@ fun findAll(): List<Task>
 // BAD: loads the entire table into memory
 List<Task> allTasks = taskRepository.findAll();
 
-// GOOD: paginate
-Page<Task> tasks = taskRepository.findAll(PageRequest.of(page, 20, Sort.by("createdAt").descending()));
+// GOOD: paginate with limit/offset (or your ORM's equivalent)
+List<Task> tasks = entityManager
+    .createQuery("SELECT t FROM Task t ORDER BY t.createdAt DESC", Task.class)
+    .setFirstResult((page - 1) * 20)
+    .setMaxResults(20)
+    .getResultList();
 ```
 
 ### Missing Caching
@@ -74,9 +76,13 @@ Page<Task> tasks = taskRepository.findAll(PageRequest.of(page, 20, Sort.by("crea
 Cache reads that are frequent and rarely change; always set a TTL and an eviction policy — an unbounded cache is a memory leak.
 
 ```java
-@Cacheable(value = "appConfig", cacheManager = "shortLivedCacheManager")
-public AppConfig getAppConfig() {
-    return configRepository.findFirst();
+Cache<String, AppConfig> cache = Caffeine.newBuilder()
+    .expireAfterWrite(Duration.ofMinutes(5))
+    .maximumSize(1)
+    .build();
+
+AppConfig getAppConfig() {
+    return cache.get("appConfig", key -> configRepository.findFirst());
 }
 ```
 
@@ -89,7 +95,7 @@ A local cache (Caffeine) is enough for single-instance data; use a shared cache 
 | "We'll optimize later" | Performance debt compounds. Fix obvious anti-patterns now, defer micro-optimizations. |
 | "It's fast on my machine" | Your machine isn't production. Profile under realistic load and data volume. |
 | "This optimization is obvious" | If you didn't measure, you don't know. Profile first. |
-| "The framework handles performance" | Frameworks (JPA, Spring) prevent some issues but won't fix an N+1 query you wrote. |
+| "The framework handles performance" | Your ORM/framework prevents some issues but won't fix an N+1 query you wrote. |
 
 ## Red Flags
 

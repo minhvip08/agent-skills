@@ -47,23 +47,24 @@ If you can't name the trust boundaries for a feature, you're not ready to secure
 
 ## Prevention Patterns
 
-### Injection (SQL/JPQL)
+### Injection (SQL)
 
 ```java
 // BAD: string concatenation
 String sql = "SELECT * FROM users WHERE id = '" + userId + "'";
 
-// GOOD: parameterized / JPA repository
-@Query("SELECT u FROM User u WHERE u.id = :id")
-Optional<User> findById(@Param("id") String id);
+// GOOD: parameterized query
+PreparedStatement stmt = connection.prepareStatement("SELECT * FROM users WHERE id = ?");
+stmt.setString(1, userId);
 ```
+
+If you're using an ORM (JPA/Hibernate, jOOQ, MyBatis...), the same rule applies: build queries through the library's parameter binding, never by concatenating a raw string.
 
 ### Authentication
 
 ```java
-PasswordEncoder encoder = new BCryptPasswordEncoder(12);
-String hash = encoder.encode(plaintext);
-boolean valid = encoder.matches(plaintext, hash);
+String hash = BCrypt.hashpw(plaintext, BCrypt.gensalt(12));
+boolean valid = BCrypt.checkpw(plaintext, hash);
 ```
 
 Session cookies: `httpOnly`, `secure`, `sameSite=Lax`, bounded expiry, secret from environment/vault — never in code.
@@ -71,34 +72,21 @@ Session cookies: `httpOnly`, `secure`, `sameSite=Lax`, bounded expiry, secret fr
 ### Broken Access Control
 
 ```java
-@PatchMapping("/api/tasks/{id}")
-public ResponseEntity<Task> update(@PathVariable String id, @AuthenticationPrincipal User user, @RequestBody TaskUpdate body) {
-    Task task = taskService.findById(id);
-    if (!task.getOwnerId().equals(user.getId())) {
+// Handler for PATCH /api/tasks/{id}
+public Response updateTask(String taskId, User authenticatedUser, TaskUpdate body) {
+    Task task = taskService.findById(taskId);
+    if (!task.getOwnerId().equals(authenticatedUser.getId())) {
         throw new ForbiddenException("Not authorized to modify this task");
     }
-    return ResponseEntity.ok(taskService.update(id, body));
+    return Response.ok(taskService.update(taskId, body));
 }
 ```
 
-Check authorization, not just authentication, on every protected endpoint.
+Check authorization, not just authentication, on every protected endpoint — regardless of which web framework wires the route to this handler.
 
 ### Security Misconfiguration (Headers & CORS)
 
-```java
-@Bean
-SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    http.headers(headers -> headers.contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'")))
-        .cors(cors -> cors.configurationSource(request -> {
-            CorsConfiguration config = new CorsConfiguration();
-            config.setAllowedOrigins(List.of(System.getenv("ALLOWED_ORIGINS").split(",")));
-            return config;
-        }));
-    return http.build();
-}
-```
-
-Never use a wildcard (`*`) origin alongside credentials.
+Set these on every response, at the framework's filter/middleware layer rather than per-handler: `Content-Security-Policy` (start from `default-src 'self'`), `Strict-Transport-Security`, `X-Frame-Options`, `X-Content-Type-Options`. For CORS, allow only known origins read from configuration (`System.getenv("ALLOWED_ORIGINS")`, split on comma) — never use a wildcard (`*`) origin alongside credentials.
 
 ### Sensitive Data Exposure
 
@@ -128,7 +116,7 @@ Note the TOCTOU gap: a short-TTL DNS record can rebind between validation and co
 
 ## Input Validation
 
-Validate at the boundary with Jakarta Bean Validation, not ad hoc checks scattered through the service layer:
+Validate at the boundary with a declarative schema (Jakarta Bean Validation annotations, or your framework's equivalent), not ad hoc checks scattered through the service layer:
 
 ```java
 public record CreateTaskRequest(
@@ -137,8 +125,11 @@ public record CreateTaskRequest(
     @NotNull TaskPriority priority
 ) {}
 
-@PostMapping("/api/tasks")
-public ResponseEntity<Task> create(@Valid @RequestBody CreateTaskRequest req) { ... }
+// Handler validates the incoming request against the schema before it reaches the service layer
+public Response createTask(CreateTaskRequest req) {
+    validator.validate(req); // throws on constraint violation
+    return Response.created(taskService.create(req));
+}
 ```
 
 **File uploads:** restrict allowed content types and max size; don't trust the file extension — check magic bytes for anything security-sensitive.
@@ -167,17 +158,6 @@ If your service calls an LLM (chatbot, summarizer, agent, RAG), it inherits a ne
 - **Keep secrets and other tenants' data out of prompts** — anything in context can be echoed back.
 - **Constrain tool/agent permissions** to the minimum, and require confirmation for destructive actions.
 - **Bound consumption** — cap tokens, request rate, and recursion depth.
-
-```java
-// GOOD: model output is data — parse defensively, validate, then act through an allowlist
-CommandIntent intent;
-try {
-    intent = objectMapper.readValue(llm.replyJson(userMessage), CommandIntent.class);
-} catch (Exception e) {
-    throw new ValidationException("unexpected model output");
-}
-runAllowlistedAction(intent.action(), intent.params());
-```
 
 ## Common Rationalizations
 

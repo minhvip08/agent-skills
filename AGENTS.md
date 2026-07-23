@@ -23,13 +23,14 @@ OpenCode uses a **skill-driven execution model** powered by the `skill` tool and
 
 The agent should automatically map user intent to skills:
 
-- Feature / new functionality → `spec-driven-development`, then `incremental-implementation`, `test-driven-development`
+- Feature / new functionality → `spec-driven-development`, then `incremental-implementation`
+- Requirements are vague or underspecified → `interview-me`
 - Planning / breakdown → `planning-and-task-breakdown`
-- Bug / failure / unexpected behavior → `debugging-and-error-recovery`
 - Code review → `code-review-and-quality`
 - Refactoring / simplification → `code-simplification`
-- API or interface design → `api-and-interface-design`
-- UI work → `frontend-ui-engineering`
+- Security-sensitive code (auth, input, secrets, external calls) → `security-and-hardening`
+- Suspected performance regression or profiling need → `performance-optimization`
+- Starting a session, or output quality is drifting → `context-engineering`
 
 ### Lifecycle Mapping (Implicit Commands)
 
@@ -37,12 +38,12 @@ OpenCode does not support slash commands like `/spec` or `/plan`.
 
 Instead, the agent must internally follow this lifecycle:
 
-- DEFINE → `spec-driven-development`
+- DEFINE → `interview-me` (if underspecified), then `spec-driven-development`
 - PLAN → `planning-and-task-breakdown`
-- BUILD → `incremental-implementation` + `test-driven-development`
-- VERIFY → `debugging-and-error-recovery`
-- REVIEW → `code-review-and-quality`
-- SHIP → `shipping-and-launch`
+- BUILD → `incremental-implementation`
+- REVIEW → `code-review-and-quality` (pulls in `security-and-hardening` and `performance-optimization` as needed)
+
+There is no dedicated VERIFY or SHIP skill in this pack currently — treat `code-review-and-quality`'s verification checklist as the release gate.
 
 ### Execution Model
 
@@ -79,14 +80,10 @@ Composition rule: **the user (or a slash command) is the orchestrator. Personas 
 
 The only multi-persona orchestration pattern this repo endorses is **parallel fan-out with a merge step** — used by `/ship` to run `code-reviewer`, `security-auditor`, and `test-engineer` concurrently and synthesize their reports. Do not build a "router" persona that decides which other persona to call; that's the job of slash commands and intent mapping.
 
-See [docs/agents.md](docs/agents.md) for the decision matrix and [references/orchestration-patterns.md](references/orchestration-patterns.md) for the full pattern catalog.
-
 **Claude Code interop:** the personas in `agents/` work as Claude Code subagents (auto-discovered from this plugin's `agents/` directory) and as Agent Teams teammates (referenced by name when spawning). Two platform constraints align with our rules: subagents cannot spawn other subagents, and teams cannot nest. Plugin agents silently ignore the `hooks`, `mcpServers`, and `permissionMode` frontmatter fields.
 
 ## Creating a New Skill
 
-> **Before you start:** run the pre-flight checks in [CONTRIBUTING.md](CONTRIBUTING.md#before-proposing-a-new-skill), search the catalog, check open PRs (`gh pr list --state open`), confirm the idea fits [docs/skill-anatomy.md](docs/skill-anatomy.md), and justify the gap in your PR description. Most new-skill ideas overlap an existing skill or an open PR; prefer extending an existing skill over adding a near-duplicate. CONTRIBUTING.md is the single source of truth for this workflow.
+> **Before you start:** run the pre-flight checks in [CONTRIBUTING.md](CONTRIBUTING.md#before-proposing-a-new-skill), search the catalog, check open PRs (`gh pr list --state open`), confirm the idea matches the section structure already used by the skills in `skills/`, and justify the gap in your PR description. Most new-skill ideas overlap an existing skill or an open PR; prefer extending an existing skill over adding a near-duplicate. CONTRIBUTING.md is the single source of truth for this workflow.
 
-Skills in this repo are markdown-first: each lives at `skills/<kebab-case-name>/SKILL.md` with YAML frontmatter (`name`, `description`) and follows the section anatomy (Overview, When to Use, Process, Common Rationalizations, Red Flags, Verification). Add a `scripts/` directory only when the skill ships runnable helpers; most skills are markdown only, and there are no per-skill zip packages.
-
-For the full format, naming conventions, frontmatter rules, supporting-file thresholds, and writing principles, see [docs/skill-anatomy.md](docs/skill-anatomy.md), the single source of truth for skill structure. Do not restate that guidance here, link to it.
+Skills in this repo are markdown-first: each lives at `skills/<kebab-case-name>/SKILL.md` with YAML frontmatter (`name`, `description`) and follows the section anatomy (Overview, When to Use, Process, Common Rationalizations, Red Flags, Verification). Keep it guideline-length — trim illustrative examples down to the minimum that makes the point, and use Java/Kotlin for code examples to match the rest of the pack.

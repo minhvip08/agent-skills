@@ -29,8 +29,8 @@ For each slice: **implement** the smallest complete piece → **test** (run the 
 
 ## Implementation Rules
 
-1. **Simplicity first.** Before coding, ask "what's the simplest thing that could work?" Three similar lines beat a premature abstraction — implement the naive, obviously-correct version, optimize only after tests prove correctness.
-2. **Scope discipline.** Touch only what the task requires — don't clean up adjacent code, modernize syntax you're only reading, or add features not in the spec "because they seem useful." If you notice something worth fixing outside scope, note it and ask, don't fix it inline.
+1. **Simplicity first.** Before coding, ask "what's the simplest thing that could work?" Three similar lines beat a premature abstraction — implement the naive, obviously-correct version, optimize only after tests prove correctness. Don't add configurability or flexibility nobody asked for, and don't write error handling for scenarios that can't actually happen — both are complexity paid for now against a benefit that may never arrive.
+2. **Scope discipline.** Touch only what the task requires — don't clean up adjacent code, modernize syntax you're only reading, or add features not in the spec "because they seem useful." If you notice something worth fixing outside scope, note it and ask, don't fix it inline. Exception: if your own change leaves behind an unused import, variable, or method, remove it — that's cleanup of your own mess, not scope creep. Pre-existing dead code you didn't just orphan is out of scope; note it, don't touch it. This applies to tooling too: run the formatter, linter, or build only against the files your change touched (e.g. `git diff --name-only`), never the whole repo — a full-tree format/lint pass reformats files nobody asked you to touch and buries the real diff in noise.
 3. **One thing at a time.** Each increment/commit changes one logical thing — don't mix a new feature with an unrelated refactor or config change.
 4. **Keep it compilable.** After each increment, the project must build and existing tests must pass — never leave the codebase broken between slices.
 5. **Feature flags for incomplete work.** Gate an unfinished feature behind a flag checked at the entry point so you can still merge small increments.
@@ -65,6 +65,7 @@ Run each command after a change that could affect it — don't re-run on unchang
 - Build or tests broken between increments
 - Building abstractions before a third use case demands them
 - Touching files outside the task scope "while I'm here"
+- Running a formatter, linter, or build across the whole repo instead of just the changed files
 
 ## Verification
 

@@ -58,7 +58,10 @@ Before adding a dependency: does the existing stack already solve this? Is it ma
 
 ## Dead Code Hygiene
 
-After a refactor, list anything now unreachable or unused and ask before deleting it — don't leave it lying around, but don't silently remove things you're not sure about either.
+Distinguish two cases when reviewing a change:
+
+- **Orphaned by this change** (an import, variable, or method the diff itself made unused) — this should already be removed; flag it as required if it isn't. No need to ask, it's a direct consequence of the author's own edit.
+- **Pre-existing, unrelated to this change** — note it explicitly and ask before requiring its removal in this PR; don't silently leave it unmentioned, and don't demand an unrelated cleanup be bundled in either.
 
 ## Common Rationalizations
 

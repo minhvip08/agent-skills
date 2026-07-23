@@ -7,23 +7,20 @@ This is the agent-skills project — a collection of production-grade engineerin
 ## Project Structure
 
 ```
-skills/       → Core skills (SKILL.md per directory)
+skills/       → Core skills (SKILL.md per directory) — Java/Kotlin backend focused
 agents/       → Reusable agent personas (code-reviewer, test-engineer, security-auditor, web-performance-auditor)
-hooks/        → Session lifecycle hooks
-.claude/commands/ → Slash commands (/spec, /plan, /build, /test, /review, /code-simplify, /ship; plus /webperf specialist audit)
-references/   → Supplementary checklists (testing, performance, security, accessibility, observability)
-evals/        → Skill eval cases + framework (see evals/README.md)
-docs/         → Setup guides for different tools
+.claude/commands/ → Slash commands (/spec, /plan, /build, /test, /review, /code-simplify, /ship)
+commands/     → Same slash commands, packaged for other CLIs (Antigravity, etc.)
 ```
 
 ## Skills by Phase
 
-**Define:** interview-me, idea-refine, spec-driven-development
+**Define:** interview-me, spec-driven-development
 **Plan:** planning-and-task-breakdown
-**Build:** incremental-implementation, test-driven-development, context-engineering, source-driven-development, doubt-driven-development, frontend-ui-engineering, api-and-interface-design
-**Verify:** browser-testing-with-devtools, debugging-and-error-recovery
+**Build:** incremental-implementation, context-engineering
 **Review:** code-review-and-quality, code-simplification, security-and-hardening, performance-optimization
-**Ship:** git-workflow-and-versioning, ci-cd-and-automation, deprecation-and-migration, documentation-and-adrs, observability-and-instrumentation, shipping-and-launch
+
+Generated task artifacts (spec, plan, todo list) live together per task under `tasks/<YYYY-MM-DD>-<kebab-case-task-name>/`.
 
 ## Conventions
 
@@ -31,18 +28,16 @@ docs/         → Setup guides for different tools
 - YAML frontmatter with `name` and `description` fields
 - Description starts with what the skill does (third person), followed by trigger conditions ("Use when...")
 - Every skill has: Overview, When to Use, Process, Common Rationalizations, Red Flags, Verification
-- References are in `references/`, not inside skill directories
-- Supporting files only created when content exceeds 100 lines
+- Skills are kept intentionally concise (guideline-length, not reference manuals) and code examples use Java/Kotlin
 
 ## Contributing
 
-Before adding a new skill or significantly reworking an existing one, run the pre-flight checks in [CONTRIBUTING.md](CONTRIBUTING.md#before-proposing-a-new-skill): search the catalog, check open PRs, confirm the idea fits [docs/skill-anatomy.md](docs/skill-anatomy.md), and justify the gap. Prefer extending an existing skill over adding a near-duplicate. CONTRIBUTING.md is the single source of truth for this workflow; do not restate its checklist here or elsewhere, link to it.
+Before adding a new skill or significantly reworking an existing one, run the pre-flight checks in [CONTRIBUTING.md](CONTRIBUTING.md#before-proposing-a-new-skill): search the catalog, check open PRs, confirm the idea matches the section structure already used by the skills in `skills/`, and justify the gap. Prefer extending an existing skill over adding a near-duplicate. CONTRIBUTING.md is the single source of truth for this workflow; do not restate its checklist here or elsewhere, link to it.
 
 ## Commands
 
 - `npm test` — Not applicable (this is a documentation project)
 - Validate: Check that all SKILL.md files have valid YAML frontmatter with name and description
-- Evals: `node scripts/run-evals.js` — trigger/routing evals for every skill (CI); `--behavioral <skill>` for graded runs
 
 ## Pull Requests
 
@@ -54,7 +49,7 @@ PRs target the upstream repository's default branch. In a typical fork setup the
 ## Boundaries
 
 - Always: Run the CONTRIBUTING.md pre-flight checks before creating a new skill directory
-- Always: Follow the skill-anatomy.md format for new skills
+- Always: Follow the existing section structure (Overview, When to Use, Process, Common Rationalizations, Red Flags, Verification) for new or reworked skills
 - Always: Check the upstream repo's open PRs and issues for overlap before opening a new PR
 - Never: Add skills that are vague advice instead of actionable processes
 - Never: Duplicate content between skills — reference other skills instead

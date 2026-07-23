@@ -39,7 +39,7 @@ Ask clarifying questions until requirements are concrete, and surface your assum
 
 ```
 ASSUMPTIONS I'M MAKING:
-1. This is a Spring Boot service (based on existing pom.xml/build.gradle)
+1. This is a Java/Kotlin backend service (based on existing pom.xml/build.gradle)
 2. Auth uses session-based cookies, not JWT
 3. The database is PostgreSQL
 → Correct me now or I'll proceed with these.
