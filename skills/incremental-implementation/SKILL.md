@@ -19,7 +19,7 @@ Build in thin vertical slices — implement one piece, test it, verify it, then 
 
 ## The Increment Cycle
 
-For each slice: **implement** the smallest complete piece → **test** (run the suite, or write one if missing) → **verify** (tests pass, build succeeds) → **stage** only the files this slice touched (`git add <files>`, never `git add -A`) → move to the next slice, carrying forward.
+For each slice: **implement** the smallest complete piece → **write tests** for it → **build** → **run tests** → **stage** only the files this slice touched (`git add <files>`, never `git add -A`) → move to the next slice, carrying forward.
 
 Don't commit after every slice. Staging after each verified increment keeps the working tree organized and lets you review exactly what each slice changed, but committing is a separate decision — made once, at a natural checkpoint, or when the task is done — not an automatic step in the per-slice loop.
 
@@ -44,8 +44,9 @@ When directing an agent, be explicit about what's in scope for the increment (e.
 ## Increment Checklist
 
 - [ ] The change does one thing and does it completely
-- [ ] All existing tests still pass (`mvn test` / `./gradlew test`)
+- [ ] Tests for the change are written
 - [ ] The build succeeds (`mvn verify` / `./gradlew build`)
+- [ ] All tests pass — new and existing (`mvn test` / `./gradlew test`)
 - [ ] The new functionality works as expected
 - [ ] The change is staged (`git add`), scoped to only the files this increment touched — not committed yet
 
