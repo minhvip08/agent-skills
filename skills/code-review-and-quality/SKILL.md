@@ -32,7 +32,7 @@ Every change gets reviewed before merge across five axes: correctness, readabili
 ## Review Process
 
 1. **Understand intent** — what is this trying to accomplish, against what spec/task?
-2. **Review tests first** — do they exist, cover edge cases, and test behavior rather than implementation?
+2. **Review tests first** — do they exist, cover edge cases, and test behavior rather than implementation? Answer "would they catch a regression?" by experiment, not by reading: invert one condition the change adds (drop a negation, swap `&&` for `||`), run the suite, then restore the file. A mutation that stays green is a finding.
 3. **Walk the implementation** against the five axes above.
 4. **Categorize findings by severity** so the author knows what's required:
 

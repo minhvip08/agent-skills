@@ -91,6 +91,8 @@ Cover these six areas:
 
 Reframe vague requirements as testable success criteria: "make it faster" becomes "p95 API latency < 200ms" — something you can loop toward instead of guess at.
 
+**Stop after writing the spec.** Once it's saved, summarize it, list the Open Questions, ask the human to approve or request changes, and end your turn. Don't start Phase 2, invoke `planning-and-task-breakdown`, or write code in the same turn — planning begins only after approval in a later turn.
+
 ### Phase 2: Plan
 
 With the validated spec, identify components and their dependencies, implementation order, risks, and what can be parallelized. Follow `planning-and-task-breakdown` for the mechanics — it's the canonical source. Save the plan and task list into the same task folder as the spec: `tasks/<YYYY-MM-DD>-<task-name>/plan.md` and `.../todo.md`.
@@ -122,11 +124,12 @@ Update the spec when decisions or scope change — before implementing the chang
 - Asking "should I just start building?" before clarifying what "done" means
 - Implementing features not mentioned in any spec or task list
 - Making architectural decisions without documenting them
+- Writing the spec and starting the plan or code in the same turn
 
 ## Verification
 
 - [ ] The spec covers all six core areas
-- [ ] The human has reviewed and approved the spec
+- [ ] The human has reviewed and approved the spec, in a later turn than the one that saved it
 - [ ] Success criteria are specific and testable
 - [ ] Boundaries (Always/Ask First/Never) are defined
 - [ ] The spec is saved to `tasks/<date>-<task-name>/SPEC.md`

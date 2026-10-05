@@ -26,6 +26,7 @@ What people ask for and what they actually want are often different things. The 
 3. **Listen for "want vs. should want."** Answers that pattern-match best practice ("scalable", "clean architecture", "the standard approach") without specifics are a sign the user is answering what sounds right, not what they want. Ask: *"If you didn't have to justify this to anyone, what would you actually want?"*
 4. **Restate the intent** in the user's words once confidence is high — tight, 5–8 lines: Outcome / User / Why now / Success / Constraint / **Out of scope**. The "out of scope" line is non-negotiable; half of misalignment is silent disagreement about what's *not* being built.
 5. **Confirm with an explicit yes.** "Whatever you think," "sounds good," and silence are not yes — they mean re-ask with two concrete options, or ask "anything you'd refine?" Loop until the yes is explicit.
+6. **Stop the turn after the yes.** Deliver the confirmed statement of intent, offer the downstream paths (save it, draft a spec with `spec-driven-development`), then end your turn — don't invoke tools or start downstream work until the user picks the next step.
 
 **Stop condition:** you're done when you can predict the user's reaction to the next three questions you'd ask. If several rounds pass with no rising confidence, say so directly: "I still can't predict your reactions — something foundational is missing. Want to step back?"
 
@@ -79,3 +80,4 @@ Two questions in, the real ask was "a list," not "a dashboard" — a different a
 - [ ] Questions were asked one at a time, each with a guess attached
 - [ ] A concrete restate (including Out of scope) was written back and confirmed with an explicit yes
 - [ ] At the stop point, the agent could predict reactions to the next three questions
+- [ ] After the explicit yes, the turn ended without invoking tools or starting downstream work

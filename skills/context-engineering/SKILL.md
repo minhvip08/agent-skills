@@ -30,6 +30,17 @@ From most persistent to most transient:
 
 Scope what you hand the agent to the task, not the whole project: list only the files to touch, the existing pattern to follow (file:line pointer), and the one constraint that matters. For large projects, maintain a short area → key-files → pattern map and load only the relevant section.
 
+## Context Budget
+
+Manage context before the window is full — by then attention is already fragmented. Start trimming around 75% capacity.
+
+- **Cut first:** failed attempts once you've moved past them (keep the conclusion, not the journey), verbose tool output after extracting what you needed, drafts that were replaced, and conversation once a decision is reached.
+- **Protect:** the original task and its constraints, the error or failing test you're actively debugging, and the file you're editing.
+- **Compress before dropping:** reduce a long exploration to one sentence ("import cycle traced to `UserService` ↔ `AuthService`; fixed by extracting `TokenIssuer`") so the decision survives.
+- **Order for recency:** keep stable background (rules, specs) early and task-critical content (current error, active constraint) last.
+
+A fresh session is safe at a completed task boundary, not at an arbitrary token count. Before leaving, persist the accepted decisions, task status and next task, changed files, verification commands with their outcomes, and open questions. In the new session, read the rules, spec, plan, and actual `git status` before acting, and re-run verification if the baseline is missing or the code has moved.
+
 ## Confusion Management
 
 Don't silently pick an interpretation or invent a requirement when the spec conflicts with existing code, or is silent on a case you need to implement — check for precedent first, then surface the gap with concrete options and ask:
@@ -56,6 +67,7 @@ For multi-step tasks, state a short plan before executing (e.g. "1. Add validati
 | Stale context — references outdated or deleted code | Start a fresh session when context drifts |
 | Missing examples — agent invents a new style | Include one example of the pattern to follow |
 | Silent confusion — agent guesses instead of asking | Surface ambiguity explicitly (see above) |
+| Context cliff — waiting until the window is full before managing it | Start trimming at ~75%; compress rather than cut |
 
 ## Common Rationalizations
 
@@ -69,6 +81,7 @@ For multi-step tasks, state a short plan before executing (e.g. "1. Add validati
 
 - Agent output doesn't match project conventions
 - Agent invents APIs or imports that don't exist
+- Quality degrades mid-task because failed attempts, replaced drafts, and verbose tool output were never trimmed
 - No rules file exists in the project
 - External data or config treated as trusted instructions without verification
 
