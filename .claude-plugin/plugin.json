@@ -1,0 +1,10 @@
+{
+  "name": "agent-skills",
+  "description": "Engineering skills for AI coding agents, focused on Java/Kotlin backends.",
+  "author": { "name": "minhvip08" },
+  "homepage": "https://github.com/minhvip08/agent-skills",
+  "repository": "https://github.com/minhvip08/agent-skills",
+  "license": "MIT",
+  "commands": ["./.claude/commands"],
+  "skills": "./skills"
+}

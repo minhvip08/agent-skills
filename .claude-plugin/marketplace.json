@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "minhvip08-agent-skills",
+  "description": "Engineering skills for AI coding agents, focused on Java/Kotlin backends.",
+  "owner": {
+    "name": "minhvip08",
+    "url": "https://github.com/minhvip08"
+  },
+  "plugins": [
+    {
+      "name": "agent-skills",
+      "source": "./",
+      "description": "Skills for spec, plan, build, review, and hardening of Java/Kotlin backend work.",
+      "homepage": "https://github.com/minhvip08/agent-skills",
+      "license": "MIT",
+      "keywords": ["skills", "agents", "java", "kotlin", "spec", "review"]
+    }
+  ]
+}
