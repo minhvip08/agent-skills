@@ -1,6 +1,6 @@
 ---
 name: planning-and-task-breakdown
-description: Breaks work into ordered tasks. Use when you have a spec or clear requirements and need to break work into implementable tasks. Use when a task feels too large to start, when you need to estimate scope, or when parallel work is possible.
+description: Breaks work into small, ordered, verifiable tasks. Use when a spec or clear requirements need to become implementable tasks, when a task feels too large to start, or when work could be parallelized.
 ---
 
 # Planning and Task Breakdown
@@ -71,7 +71,7 @@ Break a task down further if: it would take more than one focused session, you c
 - [Needs human input]
 ```
 
-Save to `tasks/<date>-<task-name>/plan.md` (plan) and `.../todo.md` (checklist) — the convention expected by `/build` and other downstream tooling. Reuse the same folder the spec was written to; don't create a second one for the same task.
+`/build` and other downstream tooling expect these paths. Reuse the folder the spec was written to; don't create a second one for the same task.
 
 ## Parallelization
 
@@ -81,9 +81,8 @@ Safe to parallelize: independent feature slices, tests for already-implemented f
 
 | Rationalization | Reality |
 |---|---|
-| "I'll figure it out as I go" | That's how you end up with a tangled mess. Minutes of planning saves hours. |
 | "The tasks are obvious" | Write them down anyway — it surfaces hidden dependencies and edge cases. |
-| "Planning is overhead" | Planning is the task. Implementation without a plan is just typing. |
+| "Build all the entities first, then the services" | Horizontal layers leave nothing testable until the end. Slice vertically. |
 
 ## Red Flags
 

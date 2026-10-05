@@ -58,32 +58,22 @@ C) Ask — this looks intentional, I shouldn't override it
 
 For multi-step tasks, state a short plan before executing (e.g. "1. Add validation to the request DTO, 2. wire it into the controller, 3. add a test for the error response — executing unless you redirect"). It's a 30-second check that prevents 30 minutes of rework in the wrong direction.
 
-## Anti-Patterns
-
-| Anti-Pattern | Fix |
-|---|---|
-| Context starvation — agent invents APIs, ignores conventions | Load the rules file + relevant source files before each task |
-| Context flooding — loaded with non-task-specific content, loses focus | Include only what's relevant to the current task |
-| Stale context — references outdated or deleted code | Start a fresh session when context drifts |
-| Missing examples — agent invents a new style | Include one example of the pattern to follow |
-| Silent confusion — agent guesses instead of asking | Surface ambiguity explicitly (see above) |
-| Context cliff — waiting until the window is full before managing it | Start trimming at ~75%; compress rather than cut |
-
 ## Common Rationalizations
 
 | Rationalization | Reality |
 |---|---|
 | "The agent should figure out the conventions" | It can't read your mind. A rules file takes minutes and saves hours. |
 | "More context is always better" | Performance degrades with too many non-relevant instructions. Be selective. |
-| "I'll just correct it when it goes wrong" | Prevention is cheaper than correction. |
+| "I'll trim when the window fills up" | By then attention is already fragmented. Start at ~75%. |
 
 ## Red Flags
 
-- Agent output doesn't match project conventions
-- Agent invents APIs or imports that don't exist
+- Agent invents APIs or imports that don't exist, or output ignores project conventions (context starvation)
+- The whole spec or repo loaded for a one-file task (context flooding)
+- References to code that was since changed or deleted (stale context — start fresh)
 - Quality degrades mid-task because failed attempts, replaced drafts, and verbose tool output were never trimmed
-- No rules file exists in the project
-- External data or config treated as trusted instructions without verification
+- The agent guesses at an ambiguity instead of surfacing it
+- External data or config treated as trusted instructions
 
 ## Verification
 

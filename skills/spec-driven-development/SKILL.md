@@ -93,13 +93,9 @@ Reframe vague requirements as testable success criteria: "make it faster" become
 
 **Stop after writing the spec.** Once it's saved, summarize it, list the Open Questions, ask the human to approve or request changes, and end your turn. Don't start Phase 2, invoke `planning-and-task-breakdown`, or write code in the same turn — planning begins only after approval in a later turn.
 
-### Phase 2: Plan
+### Phases 2–3: Plan and Tasks
 
-With the validated spec, identify components and their dependencies, implementation order, risks, and what can be parallelized. Follow `planning-and-task-breakdown` for the mechanics — it's the canonical source. Save the plan and task list into the same task folder as the spec: `tasks/<YYYY-MM-DD>-<task-name>/plan.md` and `.../todo.md`.
-
-### Phase 3: Tasks
-
-Break the plan into tasks completable in a single focused session, each with acceptance criteria, a verification step, and dependency ordering. Follow `planning-and-task-breakdown` for sizing and ordering.
+Follow `planning-and-task-breakdown` — it owns dependency mapping, slicing, sizing, and the plan/todo files, saved into the same task folder as the spec.
 
 ### Phase 4: Implement
 
@@ -115,13 +111,12 @@ Update the spec when decisions or scope change — before implementing the chang
 |---|---|
 | "This is simple, I don't need a spec" | Simple tasks still need acceptance criteria — a two-line spec is fine. |
 | "I'll write the spec after I code it" | That's documentation, not specification. The value is in forcing clarity *before* code. |
-| "The spec will slow us down" | A 15-minute spec prevents hours of rework. |
 | "Requirements will change anyway" | That's why the spec is a living document — an outdated spec still beats no spec. |
+| "The spec is done, I'll start planning right away" | Approval comes first, in a later turn. Unreviewed specs carry unreviewed assumptions into every task. |
 
 ## Red Flags
 
 - Starting to write code without any written requirements
-- Asking "should I just start building?" before clarifying what "done" means
 - Implementing features not mentioned in any spec or task list
 - Making architectural decisions without documenting them
 - Writing the spec and starting the plan or code in the same turn

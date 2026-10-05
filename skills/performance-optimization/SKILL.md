@@ -1,115 +1,64 @@
 ---
 name: performance-optimization
-description: Optimizes backend application performance — queries, caching, memory, and throughput. Use when performance requirements exist, when you suspect a regression, when N+1 query patterns need fixing, or when profiling reveals bottlenecks.
+description: Optimizes backend performance — queries, caching, memory, and throughput — by measuring first. Use when performance requirements exist, when a regression is suspected, or when profiling reveals a bottleneck such as N+1 queries.
 ---
 
 # Performance Optimization
 
 ## Overview
 
-Measure before optimizing. Performance work without measurement is guessing. Profile first, identify the actual bottleneck, fix it, measure again. Optimize only what measurements prove matters.
+Measure before optimizing. Profile, find the actual bottleneck, fix that one thing, measure again. Optimize only what measurements prove matters.
 
 ## When to Use
 
-- Performance requirements exist (response time SLAs, throughput targets)
-- Monitoring or users report slow behavior
-- You suspect a change introduced a regression
+- Performance requirements exist (latency SLAs, throughput targets)
+- Monitoring or users report slow behavior, or a change may have caused a regression
 - Building features that handle large datasets or high traffic
 
-**When NOT to use:** Don't optimize before you have evidence of a problem — premature optimization adds complexity that costs more than it gains.
+**When NOT to use:** no evidence of a problem — premature optimization adds complexity that costs more than it gains.
 
 ## The Workflow
 
-```
-1. MEASURE  → Establish baseline with real data (APM, query logs, profiler)
-2. IDENTIFY → Find the actual bottleneck, not the assumed one
-3. FIX      → Address that specific bottleneck
-4. VERIFY   → Measure again, confirm improvement
-5. GUARD    → Add monitoring/tests to catch regression
-```
+1. **Measure** — baseline with real data (APM, query logs, profiler), not a local guess.
+2. **Identify** — find the actual bottleneck, not the assumed one.
+3. **Fix** — address that specific bottleneck, one change at a time.
+4. **Verify** — measure again under the same conditions; record before/after numbers.
+5. **Guard** — add a metric, alert, or test that catches the regression next time.
 
 ## Common Bottlenecks
 
 | Symptom | Likely Cause | Investigation |
 |---------|-------------|---------------|
-| Slow endpoint | N+1 queries, missing index, unoptimized query | Enable SQL logging (`show-sql`, Hibernate statistics) |
-| Memory growth | Leaked references, unbounded caches, large result sets | Heap dump analysis (`jmap`, JFR) |
-| CPU spikes | Synchronous heavy computation, regex backtracking | JFR / async-profiler CPU sampling |
-| High latency, low CPU | Missing caching, thread pool exhaustion, blocking I/O on the wrong thread | Thread dump, connection pool metrics |
+| Slow endpoint | N+1 queries, missing index, unoptimized query | SQL logging (`show-sql`, Hibernate statistics), `EXPLAIN ANALYZE` |
+| Memory growth | Leaked references, unbounded caches, large result sets | Heap dump (`jmap`, JFR) |
+| CPU spikes | Heavy synchronous computation, regex backtracking | JFR / async-profiler CPU sampling |
+| High latency, low CPU | Missing cache, pool exhaustion, blocking I/O on the wrong thread | Thread dump, connection pool metrics |
 
-## Fix Common Anti-Patterns
+## Fix Rules
 
-### N+1 Queries
-
-```java
-// BAD: one query per task to fetch its owner
-List<Task> tasks = taskRepository.findAll();
-for (Task task : tasks) {
-    User owner = userRepository.findById(task.getOwnerId()).orElseThrow();
-}
-
-// GOOD: fetch join in one query — the exact syntax depends on your ORM
-// (JPA/Hibernate JPQL, jOOQ join, MyBatis mapped join, etc.)
-List<Task> tasks = entityManager
-    .createQuery("SELECT t FROM Task t JOIN FETCH t.owner", Task.class)
-    .getResultList();
-```
-
-The general fix is the same regardless of ORM: request the related entity in the same round trip instead of triggering a query per row.
-
-### Unbounded Data Fetching
-
-```java
-// BAD: loads the entire table into memory
-List<Task> allTasks = taskRepository.findAll();
-
-// GOOD: paginate with limit/offset (or your ORM's equivalent)
-List<Task> tasks = entityManager
-    .createQuery("SELECT t FROM Task t ORDER BY t.createdAt DESC", Task.class)
-    .setFirstResult((page - 1) * 20)
-    .setMaxResults(20)
-    .getResultList();
-```
-
-### Missing Caching
-
-Cache reads that are frequent and rarely change; always set a TTL and an eviction policy — an unbounded cache is a memory leak.
-
-```java
-Cache<String, AppConfig> cache = Caffeine.newBuilder()
-    .expireAfterWrite(Duration.ofMinutes(5))
-    .maximumSize(1)
-    .build();
-
-AppConfig getAppConfig() {
-    return cache.get("appConfig", key -> configRepository.findFirst());
-}
-```
-
-A local cache (Caffeine) is enough for single-instance data; use a shared cache (Redis) when multiple instances must see the same value.
+- **N+1:** fetch related data in the same round trip (fetch join, batch fetch, or an `IN` query) — whatever the ORM, never one query per row.
+- **Unbounded fetches:** every list endpoint paginates. Prefer keyset pagination (`WHERE created_at < :cursor ORDER BY created_at DESC LIMIT n`) over large offsets, which scan and discard every skipped row.
+- **Caching:** cache only reads that are frequent and rarely change. Every cache has a TTL *and* a size bound — an unbounded cache is a memory leak. Local (Caffeine) is enough for per-instance data; use a shared cache (Redis) when instances must agree on a value, and decide how it's invalidated on write.
+- **Indexes:** add one for the query you measured, then confirm with `EXPLAIN` that the planner uses it.
 
 ## Common Rationalizations
 
 | Rationalization | Reality |
 |---|---|
-| "We'll optimize later" | Performance debt compounds. Fix obvious anti-patterns now, defer micro-optimizations. |
-| "It's fast on my machine" | Your machine isn't production. Profile under realistic load and data volume. |
 | "This optimization is obvious" | If you didn't measure, you don't know. Profile first. |
-| "The framework handles performance" | Your ORM/framework prevents some issues but won't fix an N+1 query you wrote. |
+| "It's fast on my machine" | Your machine isn't production. Profile under realistic load and data volume. |
+| "The ORM handles performance" | It won't fix an N+1 query you wrote. |
 
 ## Red Flags
 
 - Optimization without profiling data to justify it
 - N+1 query patterns in data-fetching code
 - List endpoints without pagination
-- Caches with no TTL or eviction policy
-- No performance monitoring in production
+- Caches with no TTL or size bound
 
 ## Verification
 
-After any performance-related change:
-
-- [ ] Before/after measurements exist (specific numbers)
+- [ ] Before/after measurements exist, with specific numbers
 - [ ] The specific bottleneck is identified and addressed
 - [ ] No N+1 queries in new data-fetching code
-- [ ] Existing tests still pass (optimization didn't change behavior)
+- [ ] Existing tests still pass (behavior unchanged)
