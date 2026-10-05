@@ -44,6 +44,17 @@ claude --plugin-dir /path/to/agent-skills
 
 **Any other agent:** skills are plain Markdown files under `skills/<name>/SKILL.md` — point your agent's system prompt or instruction-file mechanism at the ones you want. The `commands/` directory packages the same slash commands as TOML for CLIs that read that format (e.g. Antigravity).
 
+### Recommended companion tools
+
+Optional, but they pair well with these skills — both cut how much context the agent burns, which is what `context-engineering` is about:
+
+| Tool | What it does | Setup |
+|------|-------------|-------|
+| [codegraph](https://github.com/colbymchenry/codegraph) | Pre-indexed code graph exposed as an MCP server — symbols, call paths, and impact radius in one tool call instead of a chain of file reads. Supports Java and Kotlin. `context-engineering` and `code-review-and-quality` use it when present. | `curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh \| sh`, then `codegraph install` once and `codegraph init` in each project |
+| [rtk](https://github.com/rtk-ai/rtk) | CLI proxy that compresses the output of common dev commands (git, test runners, builds) before it reaches the agent — typically 60–90% fewer tokens. | `curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh \| sh` (or `brew install rtk`), then `rtk init -g` and restart Claude Code |
+
+The skills don't require either tool — every rule that mentions a code index falls back to normal file reads when none is installed. rtk's hook only rewrites Bash commands; Claude Code's built-in Read/Grep tools bypass it.
+
 ---
 
 ## Commands
