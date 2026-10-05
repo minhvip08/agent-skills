@@ -71,7 +71,7 @@ Break a task down further if: it would take more than one focused session, you c
 - [Needs human input]
 ```
 
-`/build` and other downstream tooling expect these paths. Reuse the folder the spec was written to; don't create a second one for the same task.
+Save to `tasks/<date>-<task-name>/plan.md` (plan) and `.../todo.md` (checklist) — the convention expected by `/build` and other downstream tooling. Reuse the same folder the spec was written to; don't create a second one for the same task. If no spec folder exists yet, create one named with today's date (`YYYY-MM-DD`) and a kebab-case slug of the task name.
 
 ## Parallelization
 
