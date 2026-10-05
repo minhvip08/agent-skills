@@ -21,7 +21,7 @@ Every change gets reviewed before merge across five axes: correctness, readabili
 
 1. **Correctness** — matches the spec/task? Edge cases and error paths handled? Do the tests test the right things?
 2. **Readability** — descriptive names, straightforward control flow, no dead code or backwards-compat shims. Are abstractions earning their complexity (don't generalize before the third use case)?
-3. **Architecture** — follows existing patterns or justifies a new one; no circular dependencies; feature-specific logic lives in its owning module. A refactor should *remove* complexity, not relocate it — prefer the version where whole branches disappear.
+3. **Architecture** — follows existing patterns or justifies a new one; no circular dependencies; feature-specific logic lives in its owning module. A refactor should *remove* complexity, not relocate it — prefer the version where whole branches disappear. When the change touches a shared method, interface, or DTO, check its impact radius (callers and implementations) — via the code index if the project has one — not just the lines in the diff.
 4. **Security** — input validated, queries parameterized, authorization checked, secrets out of code and logs, dependency changes reviewed. See `security-and-hardening`.
 5. **Performance** — N+1 queries, unbounded fetches, missing pagination, blocking work on a hot path. See `performance-optimization`.
 

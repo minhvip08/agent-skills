@@ -30,6 +30,8 @@ From most persistent to most transient:
 
 Scope what you hand the agent to the task, not the whole project: list only the files to touch, the existing pattern to follow (file:line pointer), and the one constraint that matters. For large projects, maintain a short area → key-files → pattern map and load only the relevant section.
 
+If the project has a code index (e.g. a code-graph MCP server such as codegraph), use it for symbol, caller, and impact lookups before grepping or reading files in bulk — one query replaces a chain of file reads. Read whole files only for the ones you're about to change.
+
 ## Context Budget
 
 Manage context before the window is full — by then attention is already fragmented. Start trimming around 75% capacity.
