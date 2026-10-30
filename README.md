@@ -1,10 +1,10 @@
 # Agent Skills
 
-**Engineering skills for AI coding agents — tuned for Java/Kotlin backend work.**
+**Engineering skills for AI coding agents — adaptable to your project's language and stack.**
 
 Skills encode the workflows, quality gates, and best practices senior engineers use when building software, packaged so AI agents follow them consistently from spec to merge.
 
-This is a trimmed, backend-focused fork of [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills): fewer skills, shorter files, Java/Kotlin examples, and one folder per task for every generated artifact.
+This is a trimmed, stack-neutral fork of [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills): fewer skills, shorter files, examples adapted to the project, and one folder per task for every generated artifact.
 
 ```
   DEFINE          PLAN           BUILD          REVIEW
@@ -50,7 +50,7 @@ Optional, but they pair well with these skills — both cut how much context the
 
 | Tool | What it does | Setup |
 |------|-------------|-------|
-| [codegraph](https://github.com/colbymchenry/codegraph) | Pre-indexed code graph exposed as an MCP server — symbols, call paths, and impact radius in one tool call instead of a chain of file reads. Supports Java and Kotlin. `context-engineering` and `code-review-and-quality` use it when present. | `curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh \| sh`, then `codegraph install` once and `codegraph init` in each project |
+| [codegraph](https://github.com/colbymchenry/codegraph) | Pre-indexed code graph exposed as an MCP server — symbols, call paths, and impact radius in one tool call instead of a chain of file reads. `context-engineering` and `code-review-and-quality` use it when present. | `curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh \| sh`, then `codegraph install` once and `codegraph init` in each project |
 | [rtk](https://github.com/rtk-ai/rtk) | CLI proxy that compresses the output of common dev commands (git, test runners, builds) before it reaches the agent — typically 60–90% fewer tokens. | `curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh \| sh` (or `brew install rtk`), then `rtk init -g` and restart Claude Code |
 
 The skills don't require either tool — every rule that mentions a code index falls back to normal file reads when none is installed. rtk's hook only rewrites Bash commands; Claude Code's built-in Read/Grep tools bypass it.
@@ -88,7 +88,7 @@ tasks/<YYYY-MM-DD>-<kebab-case-task-name>/
 
 ## All 9 Skills
 
-Each skill is a short, structured workflow with verification gates and an anti-rationalization table. Code examples are Java/Kotlin.
+Each skill is a short, structured workflow with verification gates and an anti-rationalization table. Use the project's language, frameworks, and tooling for code examples and verification commands.
 
 ### Define — Clarify what to build
 
@@ -117,7 +117,7 @@ Each skill is a short, structured workflow with verification gates and an anti-r
 | [code-review-and-quality](skills/code-review-and-quality/SKILL.md) | Five-axis review, change sizing, severity labels (Critical / Required / Consider / Nit), mutation check on tests | Before merging any change |
 | [code-simplification](skills/code-simplification/SKILL.md) | Chesterton's Fence, one simplification at a time, behavior preserved exactly | Code works but is harder to read or maintain than it should be |
 | [security-and-hardening](skills/security-and-hardening/SKILL.md) | STRIDE threat model, three-tier boundaries, SSRF, leaked-secret rotation, dependency and supply-chain rules, LLM features | Untrusted input, auth, sensitive data, dependencies, external calls |
-| [performance-optimization](skills/performance-optimization/SKILL.md) | Measure-first workflow, backend bottleneck table (JFR, async-profiler), N+1, keyset pagination, bounded caches | Performance requirements exist or a regression is suspected |
+| [performance-optimization](skills/performance-optimization/SKILL.md) | Measure-first workflow, bottleneck investigation with project-appropriate profilers, N+1, keyset pagination, bounded caches | Performance requirements exist or a regression is suspected |
 
 ---
 
@@ -165,7 +165,7 @@ Each skill is a short, structured workflow with verification gates and an anti-r
 
 ```
 agent-skills/
-├── skills/                            # 9 skills (Java/Kotlin backend focused)
+├── skills/                            # 9 stack-neutral skills
 │   ├── interview-me/                  #   Define
 │   ├── spec-driven-development/       #   Define
 │   ├── planning-and-task-breakdown/   #   Plan
@@ -193,7 +193,7 @@ git fetch upstream
 git diff <last-synced-commit> upstream/main -- skills/ agents/ .claude/commands/
 ```
 
-Port only what applies to the remaining skills and keeps them stack-neutral or Java/Kotlin.
+Port only what applies to the remaining skills and keeps them stack-neutral.
 
 ---
 

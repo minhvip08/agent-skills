@@ -1,6 +1,6 @@
 ---
 name: performance-optimization
-description: Optimizes backend performance — queries, caching, memory, and throughput — by measuring first. Use when performance requirements exist, when a regression is suspected, or when profiling reveals a bottleneck such as N+1 queries.
+description: Optimizes application performance — queries, caching, memory, and throughput — by measuring first. Use when performance requirements exist, when a regression is suspected, or when profiling reveals a bottleneck such as N+1 queries.
 ---
 
 # Performance Optimization
@@ -29,16 +29,16 @@ Measure before optimizing. Profile, find the actual bottleneck, fix that one thi
 
 | Symptom | Likely Cause | Investigation |
 |---------|-------------|---------------|
-| Slow endpoint | N+1 queries, missing index, unoptimized query | SQL logging (`show-sql`, Hibernate statistics), `EXPLAIN ANALYZE` |
-| Memory growth | Leaked references, unbounded caches, large result sets | Heap dump (`jmap`, JFR) |
-| CPU spikes | Heavy synchronous computation, regex backtracking | JFR / async-profiler CPU sampling |
+| Slow endpoint | N+1 queries, missing index, unoptimized query | Query logs, ORM metrics, database query plans |
+| Memory growth | Leaked references, unbounded caches, large result sets | Runtime-appropriate heap snapshots and allocation profiling |
+| CPU spikes | Heavy synchronous computation, regex backtracking | Runtime-appropriate CPU sampling profiler |
 | High latency, low CPU | Missing cache, pool exhaustion, blocking I/O on the wrong thread | Thread dump, connection pool metrics |
 
 ## Fix Rules
 
 - **N+1:** fetch related data in the same round trip (fetch join, batch fetch, or an `IN` query) — whatever the ORM, never one query per row.
 - **Unbounded fetches:** every list endpoint paginates. Prefer keyset pagination (`WHERE created_at < :cursor ORDER BY created_at DESC LIMIT n`) over large offsets, which scan and discard every skipped row.
-- **Caching:** cache only reads that are frequent and rarely change. Every cache has a TTL *and* a size bound — an unbounded cache is a memory leak. Local (Caffeine) is enough for per-instance data; use a shared cache (Redis) when instances must agree on a value, and decide how it's invalidated on write.
+- **Caching:** cache only reads that are frequent and rarely change. Every cache has a TTL *and* a size bound — an unbounded cache is a memory leak. An in-process cache is enough for per-instance data; use a shared cache when instances must agree on a value, and decide how it's invalidated on write.
 - **Indexes:** add one for the query you measured, then confirm with `EXPLAIN` that the planner uses it.
 
 ## Common Rationalizations

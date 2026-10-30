@@ -7,7 +7,7 @@ This is the agent-skills project — a collection of production-grade engineerin
 ## Project Structure
 
 ```
-skills/       → Core skills (SKILL.md per directory) — Java/Kotlin backend focused
+skills/       → Core skills (SKILL.md per directory) — stack-neutral
 agents/       → Reusable agent personas (code-reviewer, test-engineer, security-auditor, web-performance-auditor)
 .claude/commands/ → Slash commands (/spec, /plan, /build, /test, /review, /code-simplify, /ship)
 commands/     → Same slash commands, packaged for other CLIs (Antigravity, etc.)
@@ -28,7 +28,7 @@ Generated task artifacts (spec, plan, todo list) live together per task under `t
 - YAML frontmatter with `name` and `description` fields
 - Description starts with what the skill does (third person), followed by trigger conditions ("Use when...")
 - Every skill has: Overview, When to Use, Process, Common Rationalizations, Red Flags, Verification
-- Skills are kept intentionally concise (guideline-length, not reference manuals) and code examples use Java/Kotlin
+- Skills are kept intentionally concise (guideline-length, not reference manuals) and stack-neutral; use pseudocode for reusable examples and the target project's language and tooling when applying a skill
 
 ## Contributing
 

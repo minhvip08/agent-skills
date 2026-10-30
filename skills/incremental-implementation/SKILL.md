@@ -45,8 +45,8 @@ When directing an agent, be explicit about what's in scope for the increment (e.
 
 - [ ] The change does one thing and does it completely
 - [ ] Tests for the change are written
-- [ ] The build succeeds (`mvn verify` / `./gradlew build`)
-- [ ] All tests pass — new and existing (`mvn test` / `./gradlew test`)
+- [ ] The build succeeds using the project's documented build command
+- [ ] All tests pass — new and existing — using the project's documented test command
 - [ ] The new functionality works as expected
 - [ ] The change is staged (`git add`), scoped to only the files this increment touched — not committed yet
 

@@ -42,7 +42,7 @@ Reduce complexity while preserving exact behavior. The goal isn't fewer lines �
    | Comment explaining *what* | Delete — the code should say it |
    | Comment explaining *why* | Keep — intent the code can't express |
 
-3. **Apply one simplification at a time; run tests after each.** If tests fail, revert and reconsider. For refactors touching 500+ lines, prefer automated tooling (IDE refactorings, OpenRewrite) over hand edits.
+3. **Apply one simplification at a time; run tests after each.** If tests fail, revert and reconsider. For refactors touching 500+ lines, prefer automated tooling (IDE refactorings or language-appropriate codemods) over hand edits.
 4. **Judge the whole:** is it genuinely easier to understand, and would a teammate approve the diff? If not, revert — not every attempt succeeds.
 
 ## Common Rationalizations

@@ -112,7 +112,7 @@ Open an issue if you find:
 - Inconsistencies between skills
 
 If a skill's guidance was wrong, outdated, or did not apply in your project
-(for example, it assumed `npm test` in a Maven or Gradle repo), use the
+(for example, it assumed a test runner the project does not use), use the
 [Skill gap](https://github.com/addyosmani/agent-skills/issues/new?template=skill-gap.yml)
 issue form. It asks for the affected skill, the relevant excerpt, your project
 context, and what you did instead — enough for maintainers to triage without a

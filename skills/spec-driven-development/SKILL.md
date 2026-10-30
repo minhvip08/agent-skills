@@ -39,7 +39,7 @@ Ask clarifying questions until requirements are concrete, and surface your assum
 
 ```
 ASSUMPTIONS I'M MAKING:
-1. This is a Java/Kotlin backend service (based on existing pom.xml/build.gradle)
+1. This change uses the language and framework already declared in the project manifests
 2. Auth uses session-based cookies, not JWT
 3. The database is PostgreSQL
 → Correct me now or I'll proceed with these.
@@ -48,10 +48,10 @@ ASSUMPTIONS I'M MAKING:
 Cover these six areas:
 
 1. **Objective** — what we're building, why, who the user is, what success looks like
-2. **Commands** — full executable commands (`mvn test`, `mvn verify`, `./gradlew build`, etc.), not just tool names
-3. **Project structure** — where source, tests, and docs live (e.g. Maven/Gradle standard layout: `src/main/java`, `src/test/java`)
+2. **Commands** — full executable commands for the project's build, tests, and lint checks, taken from its docs, manifests, scripts, or CI configuration — not just tool names or assumed defaults
+3. **Project structure** — where source, tests, and docs actually live, following the existing layout
 4. **Code style** — one real code snippet beats three paragraphs of description
-5. **Testing strategy** — framework (JUnit 5, Kotest), coverage expectations, which test levels cover which concerns
+5. **Testing strategy** — the project's test framework, coverage expectations, which test levels cover which concerns
 6. **Boundaries** — three tiers: always do (run tests before commit, validate input), ask first (schema changes, new dependencies, CI config), never do (commit secrets, remove failing tests without approval)
 
 **Spec template:**

@@ -25,7 +25,7 @@ Decompose work into small, verifiable tasks with explicit acceptance criteria. E
 4. **Write each task with:**
    - **Description** — one paragraph
    - **Acceptance criteria** — specific, testable conditions
-   - **Verification** — test command (`mvn test -Dtest=FeatureNameTest` / `./gradlew test --tests FeatureName*`), build command, manual check if needed
+   - **Verification** — full executable test and build commands from the project's docs, manifests, scripts, or CI configuration, including the relevant test selector; manual check if needed
    - **Dependencies** — task numbers, or "None"
    - **Files likely touched**
 5. **Order and checkpoint.** Satisfy dependencies first, put high-risk tasks early (fail fast), and add a checkpoint every 2–3 tasks (tests pass, build clean, core flow works, review before continuing).

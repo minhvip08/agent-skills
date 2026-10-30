@@ -1,6 +1,6 @@
 ---
 name: security-and-hardening
-description: Hardens backend code against vulnerabilities. Use when building anything that accepts untrusted input, handles authentication or sensitive data, adds or upgrades dependencies, or calls external services or LLMs.
+description: Hardens application code against vulnerabilities. Use when building anything that accepts untrusted input, handles authentication or sensitive data, adds or upgrades dependencies, or calls external services or LLMs.
 ---
 
 # Security and Hardening
@@ -29,11 +29,11 @@ If you can't name the trust boundaries for a feature, you're not ready to secure
 
 ## The Three-Tier Boundary System
 
-**Always:** validate external input at the boundary with a declarative schema (Bean Validation or equivalent); parameterize every query, including ORM/JPQL — never concatenate input; check *authorization* (ownership/role), not just authentication, on every protected endpoint; return DTOs, never entities; hash passwords with BCrypt/Argon2; set security headers and CORS at the filter layer; use `httpOnly`/`secure`/`sameSite` session cookies; rate-limit auth endpoints more strictly than general traffic.
+**Always:** validate external input at the boundary with the project's schema validation tools; parameterize every query, including ORM queries — never concatenate input; check *authorization* (ownership/role), not just authentication, on every protected endpoint; return explicitly allowed response fields, never raw persistence objects; hash passwords with BCrypt/Argon2; set security headers and CORS at the request-handling boundary; use `httpOnly`/`secure`/`sameSite` session cookies; rate-limit auth endpoints more strictly than general traffic.
 
 **Ask first:** new auth flows, new categories of sensitive data, new external integrations, CORS changes, file upload handlers, rate-limit changes, elevated roles.
 
-**Never:** commit secrets (including in `application.yml`); log passwords, tokens, or full card numbers; trust client-side validation; use a wildcard CORS origin with credentials; expose stack traces to callers; trust a file's extension (check type, size, and magic bytes).
+**Never:** commit secrets (including in configuration files); log passwords, tokens, or full card numbers; trust client-side validation; use a wildcard CORS origin with credentials; expose stack traces to callers; trust a file's extension (check type, size, and magic bytes).
 
 ## Easy-to-Miss Risks
 
@@ -41,15 +41,12 @@ If you can't name the trust boundaries for a feature, you're not ready to secure
 
 Any server-side fetch of a user-influenced URL (webhooks, "import from URL", link previews) can be aimed at internal services — cloud metadata, `localhost`, private IPs.
 
-```java
-URL url = new URL(rawUrl);
-if (!url.getProtocol().equals("https")) throw new IllegalArgumentException("https only");
-if (!ALLOWED_HOSTS.contains(url.getHost())) throw new IllegalArgumentException("host not allowed");
-for (InetAddress addr : InetAddress.getAllByName(url.getHost())) {
-    if (addr.isLoopbackAddress() || addr.isLinkLocalAddress() || addr.isSiteLocalAddress()) {
-        throw new IllegalArgumentException("private/reserved IP");
-    }
-}
+```text
+url = parse_url(raw_url)
+reject unless url.scheme == "https"
+reject unless url.host is in allowed_hosts
+addresses = resolve_all_addresses(url.host)
+reject if any address is loopback, link-local, private, or reserved
 ```
 
 Mind the TOCTOU gap: a short-TTL DNS record can rebind between validation and connection. For high-risk surfaces, resolve once and connect to the pinned IP.
@@ -60,9 +57,9 @@ If a secret ever reaches a remote, rotate it immediately — deleting the line o
 
 ### Dependencies and Supply Chain
 
-- Run the dependency audit before release (`mvn org.owasp:dependency-check:check` / Gradle `dependencyCheckAnalyze`). A critical/high finding reachable in the runtime path blocks the release; unreachable or dev-only findings are tracked for the next cycle.
-- Upgrade one dependency per change and read its changelog and the BOM/lockfile diff — not just the version number. A bulk bump that breaks the build hides which package did it.
-- Audits only catch known advisories. Before adding a new dependency, check whether the stack already solves it, and review ownership, maintenance, and release age — a plausible-looking group ID can be a typosquat.
+- Run the dependency audit before release using the project's package manager or configured vulnerability scanner. A critical/high finding reachable in the runtime path blocks the release; unreachable or dev-only findings are tracked for the next cycle.
+- Upgrade one dependency per change and read its changelog and the dependency manifest/lockfile diff — not just the version number. A bulk bump that breaks the build hides which package did it.
+- Audits only catch known advisories. Before adding a new dependency, check whether the stack already solves it, and review ownership, maintenance, and release age — a plausible-looking package name can be a typosquat.
 
 ### LLM Features
 
